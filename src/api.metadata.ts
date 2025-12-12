@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
+import * as pakage from '../package.json';
 
 export class ApiMetadata {
   private static instance?: ApiMetadata;
 
-  @ApiProperty() readonly TITLE: string = 'INTRANET DIPJ';
-  @ApiProperty() readonly DESCRIPTION: string =
-    'Plataforma web local de gestão centralizada de fluxo documental de inteligência do DIPJ, integrando repositório digital, motor de busca fulltext, controle auditável de prazos e análises estatísticas para otimizar a operacionalidade do departamento.';
-  @ApiProperty() readonly VERSION: string = '1.0.0';
-  @ApiProperty() readonly AUTHOR: string = 'Bianca Maxine Vieira';
-  @ApiProperty() readonly EMAIL: string = 'bianca.maxine.vieira@gmail.com';
-  @ApiProperty() readonly WEBSITE: string = 'https://biamaxine.github.io';
+  @ApiProperty() readonly TITLE: string = pakage.name.toUpperCase();
+  @ApiProperty() readonly DESCRIPTION: string = pakage.description;
+  @ApiProperty() readonly VERSION: string = pakage.version;
+  @ApiProperty() readonly AUTHOR: string = pakage.author;
+  @ApiProperty() readonly EMAIL: string = pakage.email;
+  @ApiProperty() readonly WEBSITE: string = pakage.website;
 
   private constructor() {}
 

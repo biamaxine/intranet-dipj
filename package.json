@@ -1,8 +1,10 @@
 {
-  "name": "api",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "name": "intranet-dipj",
+  "version": "1.0.0",
+  "description": "Plataforma web local de gestão centralizada de fluxo documental de inteligência do DIPJ, integrando repositório digital, motor de busca fulltext, controle auditável de prazos e análises estatísticas para otimizar a operacionalidade do departamento.",
+  "author": "Bia Maxine",
+  "email": "bianca.maxine.veira@gmail.com",
+  "website": "https://biamaxine.github.io",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
