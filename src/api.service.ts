@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { ApiMetadata } from './api.metadata';
 
 @Injectable()
 export class ApiService {
-  getHello(): string {
-    return 'Hello World!';
+  read(): ApiMetadata {
+    return ApiMetadata.getInstance();
   }
 }
