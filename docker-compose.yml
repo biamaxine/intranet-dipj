@@ -1,0 +1,28 @@
+services:
+  db:
+    build: ./db
+    container_name: intranet-db
+    restart: always
+    tty: true
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DATABASE=intranet
+      - POSTGRES_PASSWORD=docker
+    volumes:
+      - ./db/db_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: intranet-api
+    entrypoint: ./entrypoint.sh
+    restart: always
+    ports:
+      - '3000:3000'
+      - '5555:5555'
+    env_file:
+      - .env
+    volumes:
+      - .:/home/node/api
+    depends_on:
+      - db
