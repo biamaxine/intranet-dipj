@@ -5,10 +5,12 @@ import morgan from 'morgan';
 import { ApiMetadata } from './api.metadata';
 import { ApiModule } from './api.module';
 import { ClearCacheMiddleware } from './shared/middlewares/clear-cache.middleware';
+import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 
 async function bootstrap() {
   const api = await NestFactory.create(ApiModule);
 
+  api.useGlobalFilters(new HttpExceptionFilter());
   api.use(ClearCacheMiddleware.use);
 
   const API_METADATA = ApiMetadata.getInstance();
