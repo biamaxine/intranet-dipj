@@ -1,7 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Department } from 'generated/prisma/client';
+import { DepartmentGetPayload } from 'generated/prisma/models';
 
-export class DepartmentEntity implements Department {
+import { PrismaDepartmentPayload } from '../types/prisma/department.payload';
+
+export type IDepartmentEntity = DepartmentGetPayload<PrismaDepartmentPayload>;
+
+export class DepartmentManager {
+  @ApiProperty() name: string;
+  @ApiProperty({ required: false, type: String }) email: string | null;
+  @ApiProperty({ required: false, type: String }) phone: string | null;
+  @ApiProperty() cpf: string;
+
+  constructor(props: {
+    name: string;
+    email: string | null;
+    phone: string | null;
+    cpf: string;
+  }) {
+    Object.assign(this, props);
+  }
+}
+
+export class DepartmentEntity implements IDepartmentEntity {
   private static example?: DepartmentEntity;
 
   @ApiProperty() id: string;
@@ -18,7 +38,10 @@ export class DepartmentEntity implements Department {
   @ApiProperty() updated_at: Date;
   @ApiProperty({ required: false, type: Date }) deleted_at: Date | null;
 
-  constructor(props: Department) {
+  @ApiProperty({ required: false, type: DepartmentManager })
+  manager: DepartmentManager | null;
+
+  constructor(props: IDepartmentEntity) {
     Object.assign(this, props);
   }
 
@@ -27,8 +50,8 @@ export class DepartmentEntity implements Department {
       DepartmentEntity.example = new DepartmentEntity({
         id: crypto.randomUUID(),
         manager_id: null,
-        name: 'Análise',
-        acronym: 'DIPJ-SA',
+        name: 'ANÁLISE',
+        acronym: 'DIPJ/SA',
         description: null,
         email: null,
         phone: null,
@@ -36,8 +59,30 @@ export class DepartmentEntity implements Department {
         created_at: new Date(),
         updated_at: new Date(),
         deleted_at: null,
+        manager: null,
       });
 
     return DepartmentEntity.example;
+  }
+}
+
+export class DepartmentEntities {
+  private static example?: DepartmentEntities;
+
+  @ApiProperty() total: number;
+  @ApiProperty({ type: DepartmentEntity, isArray: true })
+  departments: DepartmentEntity[];
+
+  constructor(departments: DepartmentEntity[], total?: number) {
+    Object.assign(this, { total: total || departments.length, departments });
+  }
+
+  static getExample(): DepartmentEntities {
+    if (!DepartmentEntities.example)
+      DepartmentEntities.example = new DepartmentEntities([
+        DepartmentEntity.getExample(),
+      ]);
+
+    return DepartmentEntities.example;
   }
 }

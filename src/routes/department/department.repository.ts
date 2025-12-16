@@ -1,0 +1,210 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  DepartmentUpdateInput,
+  PrismaClientKnownRequestError,
+} from 'generated/prisma/internal/prismaNamespace';
+import {
+  DepartmentCreateInput,
+  DepartmentWhereInput,
+  DepartmentWhereUniqueInput,
+} from 'generated/prisma/models';
+import { __Object } from 'src/shared/classes/utils/object';
+import { PrismaService } from 'src/shared/services/prisma/prisma.service';
+
+import {
+  DepartmentEntities,
+  DepartmentEntity,
+} from './entities/department.entity';
+import { PrismaDepartmentPayload } from './types/prisma/department.payload';
+import {
+  DepartmentCreate,
+  DepartmentFilters,
+  DepartmentIdentifier,
+  DepartmentUpdate,
+} from './types/department.types';
+
+@Injectable()
+export class DepartmentRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(model: DepartmentCreate): Promise<DepartmentEntity> {
+    if (model.manager_id) await this.checkManager(model.manager_id);
+
+    const data = this.toCreateInput(model);
+
+    try {
+      return await this.prisma.department.create({
+        ...PrismaDepartmentPayload,
+        data,
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002')
+        throw new ConflictException({
+          message: 'Uma ou mais chaves exclusivas do Departamento já existem',
+          keys: err.meta?.target,
+        });
+
+      throw new InternalServerErrorException(
+        'Não foi possível criar o departamento',
+        { cause: err },
+      );
+    }
+  }
+
+  async readOne(identifier: DepartmentIdentifier): Promise<DepartmentEntity> {
+    const department = await this.prisma.department.findUnique({
+      ...PrismaDepartmentPayload,
+      where: identifier as DepartmentWhereUniqueInput,
+    });
+
+    if (!department)
+      throw new NotFoundException(
+        'O Departamento informado não foi encontrado',
+      );
+
+    return department;
+  }
+
+  async readMany(filters: DepartmentFilters): Promise<DepartmentEntities> {
+    const { page = 1, limit = 10, orderBy, ...rest } = filters;
+    const AND: DepartmentWhereInput[] = [];
+
+    if (__Object.isNotEmpty(rest)) {
+      const { name, acronym, email, phone, is_active } = rest;
+
+      if (name) AND.push({ name: { contains: name } });
+      if (acronym) AND.push({ acronym: { contains: acronym } });
+      if (email) {
+        const input = { email: { contains: email } };
+        AND.push({ OR: [input, { manager: input }] });
+      }
+      if (phone) {
+        const input = { phone: { contains: phone } };
+        AND.push({ OR: [input, { manager: input }] });
+      }
+      if (is_active !== undefined) AND.push({ is_active });
+    }
+
+    const [total, departments] = await this.prisma.$transaction([
+      this.prisma.department.count({ where: { AND } }),
+      this.prisma.department.findMany({
+        ...PrismaDepartmentPayload,
+        where: { AND },
+        orderBy:
+          orderBy && __Object.isNotEmpty(orderBy)
+            ? orderBy
+            : { created_at: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    return { total, departments };
+  }
+
+  async update(
+    identifier: DepartmentIdentifier,
+    model: DepartmentUpdate,
+  ): Promise<DepartmentEntity> {
+    if (__Object.isEmpty(model))
+      throw new BadRequestException(
+        'Nenhum dado foi fornecido para atualização do Departamento',
+      );
+
+    if (model.manager_id) await this.checkManager(model.manager_id);
+
+    const data = this.toUpdateInput(model);
+
+    try {
+      return await this.prisma.department.update({
+        ...PrismaDepartmentPayload,
+        where: identifier as DepartmentWhereUniqueInput,
+        data,
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === 'P2025')
+          throw new NotFoundException(
+            'O Departamento informado não foi encontrado',
+          );
+
+        if (err.code === 'P2002')
+          throw new ConflictException({
+            message: 'Uma ou mais chaves exclusivas do Departamento já existem',
+            keys: err.meta?.target,
+          });
+      }
+
+      throw new InternalServerErrorException(
+        'Não foi possível atualizar o Departamento',
+        { cause: err },
+      );
+    }
+  }
+
+  async disable(identifier: DepartmentIdentifier): Promise<DepartmentEntity> {
+    try {
+      return await this.prisma.department.update({
+        ...PrismaDepartmentPayload,
+        where: identifier as DepartmentWhereUniqueInput,
+        data: {
+          is_active: false,
+          deleted_at: new Date(),
+          manager: { disconnect: true },
+        },
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
+        throw new NotFoundException(
+          'O Departamento informado não foi encontrado',
+        );
+
+      throw new InternalServerErrorException(
+        'Não foi possível desativar o Departamento',
+        { cause: err },
+      );
+    }
+  }
+
+  private toCreateInput(model: DepartmentCreate): DepartmentCreateInput {
+    const { manager_id, ...rest } = model;
+    return {
+      ...rest,
+      manager: manager_id ? { connect: { id: manager_id } } : undefined,
+    };
+  }
+
+  private toUpdateInput(model: DepartmentUpdate): DepartmentUpdateInput {
+    const { manager_id, ...rest } = model;
+    return {
+      ...rest,
+      manager:
+        manager_id !== undefined
+          ? manager_id !== null
+            ? { connect: { id: manager_id } }
+            : { disconnect: true }
+          : undefined,
+    };
+  }
+
+  private async checkManager(manager_id: string): Promise<void> {
+    const manager = await this.prisma.user.findUnique({
+      where: { id: manager_id },
+      select: { is_active: true },
+    });
+
+    if (!manager)
+      throw new NotFoundException('O Gerente informado não foi encontrado');
+
+    if (!manager.is_active)
+      throw new BadRequestException(
+        'O Usuário informado para gerência não se encontra ativo',
+      );
+  }
+}
