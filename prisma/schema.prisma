@@ -51,7 +51,6 @@ model User {
   password    String  @db.VarChar(60) // Criptografia bcrypt
   is_active   Boolean @default(true)
   is_verified Boolean @default(false)
-  is_manager  Boolean @default(false)
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -172,11 +171,11 @@ model DocumentCategory {
   id String @id @default(uuid()) @db.Uuid
 
   // Properties
-  name         String   @unique @db.VarChar(122)
-  acronym      String   @unique @db.VarChar(16)
-  priority     Int      @default(0)
+  name         String  @unique @db.VarChar(122)
+  acronym      String  @unique @db.VarChar(16)
+  priority     Int     @default(0)
   need_content Boolean
-  need_parent  Boolean? @default(false)
+  need_parent  Boolean
 
   // Relations
   documents Document[]

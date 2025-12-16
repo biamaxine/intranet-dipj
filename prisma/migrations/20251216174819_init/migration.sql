@@ -47,7 +47,6 @@ CREATE TABLE "Users" (
     "password" VARCHAR(60) NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "is_verified" BOOLEAN NOT NULL DEFAULT false,
-    "is_manager" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -121,7 +120,7 @@ CREATE TABLE "DocumentCategories" (
     "acronym" VARCHAR(16) NOT NULL,
     "priority" INTEGER NOT NULL DEFAULT 0,
     "need_content" BOOLEAN NOT NULL,
-    "need_parent" BOOLEAN DEFAULT false,
+    "need_parent" BOOLEAN NOT NULL,
 
     CONSTRAINT "DocumentCategories_pkey" PRIMARY KEY ("id")
 );
