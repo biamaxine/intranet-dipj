@@ -17,7 +17,7 @@ datasource db {
 
 model Department {
   id         String  @id @default(uuid()) @db.Uuid
-  manager_id String? @db.Uuid
+  manager_id String? @unique @db.Uuid
 
   // Properties
   name        String  @unique @db.VarChar(60)
@@ -57,11 +57,11 @@ model User {
   deleted_at DateTime?
 
   // Relations
-  programs    UserProgramRelation[]
-  departments Department                @relation(fields: [department_id], references: [id])
-  management  Department[]              @relation("Management")
-  documents   Document[]
-  views       DocumentHistoryRelation[]
+  programs   UserProgramRelation[]
+  department Department                @relation(fields: [department_id], references: [id])
+  management Department?               @relation("Management")
+  documents  Document[]
+  views      DocumentHistoryRelation[]
 
   @@index([name, is_active])
   @@map("Users")
