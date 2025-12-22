@@ -17,17 +17,18 @@ import {
 import { __Object } from 'src/shared/classes/utils/object';
 import { PrismaService } from 'src/shared/services/prisma/prisma.service';
 
+import { DepartmentErrors } from './classes/department-errors';
 import {
   DepartmentEntities,
   DepartmentEntity,
 } from './entities/department.entity';
-import { PrismaDepartmentPayload } from './types/prisma/department.payload';
 import {
   DepartmentCreate,
   DepartmentFilters,
   DepartmentIdentifier,
   DepartmentUpdate,
 } from './types/department.types';
+import { PrismaDepartmentPayload } from './types/prisma/department.payload';
 
 @Injectable()
 export class DepartmentRepository {
@@ -46,12 +47,12 @@ export class DepartmentRepository {
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002')
         throw new ConflictException({
-          message: 'Uma ou mais chaves exclusivas do Departamento já existem',
+          message: DepartmentErrors.CONFLICT.DEPARTMENT,
           keys: err.meta?.target,
         });
 
       throw new InternalServerErrorException(
-        'Não foi possível criar o departamento',
+        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
         { cause: err },
       );
     }
@@ -64,9 +65,7 @@ export class DepartmentRepository {
     });
 
     if (!department)
-      throw new NotFoundException(
-        'O Departamento informado não foi encontrado',
-      );
+      throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
 
     return department;
   }
@@ -114,7 +113,7 @@ export class DepartmentRepository {
   ): Promise<DepartmentEntity> {
     if (__Object.isEmpty(model))
       throw new BadRequestException(
-        'Nenhum dado foi fornecido para atualização do Departamento',
+        DepartmentErrors.BAD_REQUEST.NO_PROVIDED_DATA,
       );
 
     if (model.manager_id) await this.checkManager(model.manager_id);
@@ -130,19 +129,17 @@ export class DepartmentRepository {
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === 'P2025')
-          throw new NotFoundException(
-            'O Departamento informado não foi encontrado',
-          );
+          throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
 
         if (err.code === 'P2002')
           throw new ConflictException({
-            message: 'Uma ou mais chaves exclusivas do Departamento já existem',
+            message: DepartmentErrors.CONFLICT.DEPARTMENT,
             keys: err.meta?.target,
           });
       }
 
       throw new InternalServerErrorException(
-        'Não foi possível atualizar o Departamento',
+        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_UPDATE,
         { cause: err },
       );
     }
@@ -161,12 +158,10 @@ export class DepartmentRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
-        throw new NotFoundException(
-          'O Departamento informado não foi encontrado',
-        );
+        throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
 
       throw new InternalServerErrorException(
-        'Não foi possível desativar o Departamento',
+        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_DELETE,
         { cause: err },
       );
     }
@@ -200,11 +195,11 @@ export class DepartmentRepository {
     });
 
     if (!manager)
-      throw new NotFoundException('O Gerente informado não foi encontrado');
+      throw new NotFoundException(DepartmentErrors.NOT_FOUND.MANAGER);
 
     if (!manager.is_active)
       throw new BadRequestException(
-        'O Usuário informado para gerência não se encontra ativo',
+        DepartmentErrors.BAD_REQUEST.MANAGER_INACTIVE,
       );
   }
 }

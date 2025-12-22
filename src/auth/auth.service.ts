@@ -1,8 +1,8 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   JsonWebTokenError,
@@ -12,13 +12,13 @@ import {
   NotBeforeError,
   TokenExpiredError,
 } from '@nestjs/jwt';
+import { type Cache } from 'cache-manager';
 import { UserEntity } from 'src/routes/user/entities/user.entity';
+import { PrismaUserPayload } from 'src/routes/user/types/prisma/user-payload.type';
 import { PrismaService } from 'src/shared/services/prisma/prisma.service';
 
-import { JwtPayloadModel } from './models/jwt-payload.model';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { type Cache } from 'cache-manager';
 import { AccessDeniedException } from './classes/auth.exceptions';
+import { JwtPayloadModel } from './models/jwt-payload.model';
 
 @Injectable()
 export class AuthService {
@@ -65,8 +65,8 @@ export class AuthService {
         (await this.cache.get<UserEntity>(key)) ||
         (await this.prisma.user
           .findUniqueOrThrow({
+            ...PrismaUserPayload,
             where: { id: payload.sub },
-            omit: { password: true },
           })
           .then(async user => {
             await this.cache.set(key, user, 60000);
