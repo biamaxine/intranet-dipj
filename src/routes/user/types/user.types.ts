@@ -1,10 +1,10 @@
 import { User } from 'generated/prisma/client';
 import { UserOrderByWithRelationInput } from 'generated/prisma/models';
 import { PrismaPaginationModel } from 'src/shared/models/prisma/pagination.model';
-import { OmitBySuffix } from 'src/shared/types/utils/omit.types';
-import { PartialType } from 'src/shared/types/utils/partial.types';
-import { PickBySuffix, PickOneOf } from 'src/shared/types/utils/pick.types';
-import { Prettify } from 'src/shared/types/utils/prettify.type';
+import { OmitBySuffix } from 'src/shared/utils/types/omit.types';
+import { PartialType } from 'src/shared/utils/types/partial.types';
+import { PickBySuffix, PickOneOf } from 'src/shared/utils/types/pick.types';
+import { Prettify } from 'src/shared/utils/types/prettify.type';
 
 export type UserCreate = Prettify<
   PartialType<OmitBySuffix<User, '_at' | 'is_active'>, null> & {

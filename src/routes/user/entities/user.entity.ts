@@ -22,7 +22,7 @@ export class UserManagement implements IUserManagement {
   @ApiProperty({ required: false, type: String }) email: string | null;
   @ApiProperty({ required: false, type: String }) phone: string | null;
   @ApiProperty() is_active: boolean;
-  @ApiProperty() acronym: string;
+  @ApiProperty({ required: false, type: String }) acronym: string | null;
 
   @ApiProperty() created_at: Date;
   @ApiProperty() updated_at: Date;

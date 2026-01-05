@@ -28,7 +28,7 @@ export class DepartmentEntity implements IDepartmentEntity {
   @ApiProperty({ required: false, type: String }) manager_id: string | null;
 
   @ApiProperty() name: string;
-  @ApiProperty() acronym: string;
+  @ApiProperty({ required: false, type: String }) acronym: string | null;
   @ApiProperty({ required: false, type: String }) description: string | null;
   @ApiProperty({ required: false, type: String }) email: string | null;
   @ApiProperty({ required: false, type: String }) phone: string | null;

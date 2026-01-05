@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
-import { __Array } from '../classes/utils/array';
-import { __Object } from '../classes/utils/object';
-import { __String } from '../classes/utils/string';
+import { isArrayOf } from '../utils/array.utils';
+import { isNotEmpty, isPlainObject } from '../utils/object.utils';
+import { toPascalCase, typeOf } from '../utils/string.utils';
 
 export interface ExceptionResponse {
   statusCode: HttpStatus;
@@ -27,7 +27,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
-    const errorName = `${__String.toPascalCase(HttpStatus[status])}Exception`;
+    const errorName = `${toPascalCase(HttpStatus[status])}Exception`;
 
     const body: ExceptionResponse = {
       statusCode: status,
@@ -36,19 +36,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
     };
 
-    if (typeof exceptionResponse === 'string') body.message = exceptionResponse;
-    else if (__Object.isObject(exceptionResponse)) {
+    if (typeOf(exceptionResponse, 'string')) body.message = exceptionResponse;
+    else if (isPlainObject(exceptionResponse)) {
       const { message, statusCode, error, ...data } =
         exceptionResponse as Record<string, any>;
 
       if (
-        typeof message === 'string' ||
-        (Array.isArray(message) &&
-          __Array.isArrayOf(message, v => typeof v === 'string'))
+        typeOf(message, 'string') ||
+        (Array.isArray(message) && isArrayOf(message, v => typeOf(v, 'string')))
       )
         body.message = message;
 
-      if (__Object.isNotEmpty(data)) body.data = data;
+      if (isNotEmpty(data)) body.data = data;
     }
 
     response.status(status).json(body);

@@ -14,8 +14,8 @@ import {
   DepartmentWhereInput,
   DepartmentWhereUniqueInput,
 } from 'generated/prisma/models';
-import { __Object } from 'src/shared/classes/utils/object';
 import { PrismaService } from 'src/shared/services/prisma/prisma.service';
+import { isEmpty, isNotEmpty } from 'src/shared/utils/object.utils';
 
 import { DepartmentErrors } from './classes/department-errors';
 import {
@@ -74,7 +74,7 @@ export class DepartmentRepository {
     const { page = 1, limit = 10, orderBy, ...rest } = filters;
     const AND: DepartmentWhereInput[] = [];
 
-    if (__Object.isNotEmpty(rest)) {
+    if (isNotEmpty(rest)) {
       const { name, acronym, email, phone, is_active } = rest;
 
       if (name) AND.push({ name: { contains: name } });
@@ -96,9 +96,7 @@ export class DepartmentRepository {
         ...PrismaDepartmentPayload,
         where: { AND },
         orderBy:
-          orderBy && __Object.isNotEmpty(orderBy)
-            ? orderBy
-            : { created_at: 'desc' },
+          orderBy && isNotEmpty(orderBy) ? orderBy : { created_at: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -111,7 +109,7 @@ export class DepartmentRepository {
     identifier: DepartmentIdentifier,
     model: DepartmentUpdate,
   ): Promise<DepartmentEntity> {
-    if (__Object.isEmpty(model))
+    if (isEmpty(model))
       throw new BadRequestException(
         DepartmentErrors.BAD_REQUEST.NO_PROVIDED_DATA,
       );

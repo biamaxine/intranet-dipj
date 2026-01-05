@@ -13,8 +13,8 @@ import {
   UserWhereInput,
   UserWhereUniqueInput,
 } from 'generated/prisma/internal/prismaNamespace';
-import { __Object } from 'src/shared/classes/utils/object';
 import { PrismaService } from 'src/shared/services/prisma/prisma.service';
+import { isEmpty, isNotEmpty } from 'src/shared/utils/object.utils';
 
 import { DepartmentErrors } from '../department/classes/department-errors';
 import { UserErrors } from './classes/user-errors';
@@ -84,7 +84,7 @@ export class UserRepository {
     const { page = 1, limit = 10, orderBy, ...rest } = filters;
     const AND: UserWhereInput[] = [];
 
-    if (__Object.isNotEmpty(rest)) {
+    if (isNotEmpty(rest)) {
       const { department_id, name, cpf, email, phone, is_active } = rest;
 
       if (department_id) AND.push({ department_id });
@@ -103,9 +103,7 @@ export class UserRepository {
         skip: (page - 1) * limit,
         take: limit,
         orderBy:
-          orderBy && __Object.isNotEmpty(orderBy)
-            ? orderBy
-            : { created_at: 'desc' },
+          orderBy && isNotEmpty(orderBy) ? orderBy : { created_at: 'desc' },
       }),
     ]);
 
@@ -116,7 +114,7 @@ export class UserRepository {
     identifier: UserIdentifier,
     model: UserUpdate,
   ): Promise<UserEntity> {
-    if (__Object.isEmpty(model))
+    if (isEmpty(model))
       throw new BadRequestException(UserErrors.BAD_REQUEST.NO_PROVIDED_DATA);
 
     const { department_id, is_manager, ...rest } = model;

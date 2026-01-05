@@ -21,7 +21,7 @@ model Department {
 
   // Properties
   name        String  @unique @db.VarChar(60)
-  acronym     String  @unique @db.VarChar(30)
+  acronym     String? @unique @db.VarChar(30)
   description String? @db.VarChar(500)
   email       String? @db.VarChar(255)
   phone       String? @db.VarChar(11)

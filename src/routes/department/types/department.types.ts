@@ -1,13 +1,13 @@
 import { Department } from 'generated/prisma/client';
 import { DepartmentOrderByWithRelationInput } from 'generated/prisma/models';
 import { PrismaPaginationModel } from 'src/shared/models/prisma/pagination.model';
-import { OmitBySuffix } from 'src/shared/types/utils/omit.types';
-import { PartialType } from 'src/shared/types/utils/partial.types';
-import { PickBySuffix, PickOneOf } from 'src/shared/types/utils/pick.types';
-import { Prettify } from 'src/shared/types/utils/prettify.type';
+import { OmitBySuffix } from 'src/shared/utils/types/omit.types';
+import { PartialType } from 'src/shared/utils/types/partial.types';
+import { PickOneOf } from 'src/shared/utils/types/pick.types';
+import { Prettify } from 'src/shared/utils/types/prettify.type';
 
 export type DepartmentCreate = PartialType<
-  OmitBySuffix<Department, '_at' | 'is_active'>,
+  Omit<OmitBySuffix<Department, '_at'>, 'id' | 'is_active'>,
   null
 >;
 
@@ -28,5 +28,5 @@ export type DepartmentFilters = Prettify<
 >;
 
 export type DepartmentUpdate = Partial<
-  Omit<Department, 'id' | 'is_active' | keyof PickBySuffix<Department, '_at'>>
+  Omit<OmitBySuffix<Department, '_at'>, 'id' | 'is_active'>
 >;
