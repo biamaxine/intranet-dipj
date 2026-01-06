@@ -23,7 +23,7 @@ export abstract class DepartmentErrors {
   static readonly INTERNAL_SERVER_ERROR = {
     UNABLE_CREATE: 'Não foi possível cadastrar o departamento',
     UNABLE_UPDATE: 'Não foi possível atualizar o departamento',
-    UNABLE_DELETE: 'Não foi possível desativar o departamento',
-    UNABLE_UNDELETE: 'Não foi possível reativar o departamento',
+    UNABLE_DELETE: 'Não foi possível desabilitar o departamento',
+    UNABLE_UNDELETE: 'Não foi possível habilitar o departamento',
   } as const;
 }

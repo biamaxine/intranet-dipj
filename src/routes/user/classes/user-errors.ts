@@ -24,6 +24,7 @@ export abstract class UserErrors {
   static readonly INTERNAL_SERVER_ERROR = {
     UNABLE_CREATE: 'Não foi possível cadastrar o usuário',
     UNABLE_UPDATE: 'Não foi possível atualizar o usuário',
-    UNABLE_DELETE: 'Não foi possível excluir o usuário',
+    UNABLE_DELETE: 'Não foi possível desabilitar o usuário',
+    UNABLE_UNDELETE: 'Não foi possível habilitar o usuário',
   } as const;
 }

@@ -29,6 +29,7 @@ import {
 } from './types/prisma/user-payload.type';
 import {
   UserCreate,
+  UserEnable,
   UserFilters,
   UserIdentifier,
   UserUpdate,
@@ -160,6 +161,31 @@ export class UserRepository {
     }
   }
 
+  async enable(
+    identifier: UserIdentifier,
+    data: UserEnable,
+  ): Promise<UserEntity> {
+    try {
+      return await this.prisma.user.update({
+        ...PrismaUserPayload,
+        where: identifier as UserWhereUniqueInput,
+        data: {
+          ...data,
+          is_active: true,
+          deleted_at: null,
+        },
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
+        throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+
+      throw new InternalServerErrorException(
+        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_UNDELETE,
+        { cause: err },
+      );
+    }
+  }
+
   private async toUserCreate(model: UserCreate): Promise<UserCreateInput> {
     const { department_id, is_manager, ...rest } = model;
 
@@ -188,7 +214,7 @@ export class UserRepository {
     try {
       return await this.prisma.user.update({
         ...PrismaUserPayload,
-        where: identifier as UserWhereUniqueInput,
+        where: { ...(identifier as UserWhereUniqueInput), is_active: true },
         data: model,
       });
     } catch (err) {
@@ -235,7 +261,7 @@ export class UserRepository {
     try {
       return await this.prisma.user.update({
         ...PrismaUserPayload,
-        where: identifier as UserWhereUniqueInput,
+        where: { ...(identifier as UserWhereUniqueInput), is_active: true },
         data,
       });
     } catch (err) {
@@ -263,7 +289,7 @@ export class UserRepository {
     is_manager: boolean,
   ): Promise<UserEntity> {
     const user = await this.prisma.user.findUnique({
-      where: identifier as UserWhereUniqueInput,
+      where: { ...(identifier as UserWhereUniqueInput), is_active: true },
       select: {
         id: true,
         department: { select: { id: true } },
@@ -316,7 +342,7 @@ export class UserRepository {
   ): Promise<UserEntity> {
     const [user, department] = await this.prisma.$transaction([
       this.prisma.user.findUnique({
-        where: identifier as UserWhereUniqueInput,
+        where: { ...(identifier as UserWhereUniqueInput), is_active: true },
         select: {
           id: true,
           department: { select: { id: true } },

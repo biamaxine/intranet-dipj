@@ -1,10 +1,11 @@
 import { User } from 'generated/prisma/client';
 import { UserOrderByWithRelationInput } from 'generated/prisma/models';
 import { PrismaPaginationModel } from 'src/shared/models/prisma/pagination.model';
-import { OmitBySuffix } from 'src/shared/utils/types/omit.types';
+import { OmitBySuffix, OmitType } from 'src/shared/utils/types/omit.types';
 import { PartialType } from 'src/shared/utils/types/partial.types';
 import { PickBySuffix, PickOneOf } from 'src/shared/utils/types/pick.types';
 import { Prettify } from 'src/shared/utils/types/prettify.type';
+import { RequiredType } from 'src/shared/utils/types/required.types';
 
 export type UserCreate = Prettify<
   PartialType<OmitBySuffix<User, '_at' | 'is_active'>, null> & {
@@ -31,3 +32,5 @@ export type UserUpdate = Prettify<
     is_manager?: boolean;
   }
 >;
+
+export type UserEnable = OmitType<Pick<User, 'email' | 'phone'>, null>;

@@ -22,3 +22,7 @@ export type PickOneOf<T extends object, K extends keyof T = keyof T> = Prettify<
       Partial<Record<Exclude<K, P>, never>>;
   }[K]
 >;
+
+export type PickType<T extends object, Type> = {
+  [K in keyof T]: Type extends T[K] ? Type : T[K];
+};
