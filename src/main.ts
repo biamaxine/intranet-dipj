@@ -6,9 +6,18 @@ import { ApiMetadata } from './api.metadata';
 import { ApiModule } from './api.module';
 import { ClearCacheMiddleware } from './shared/middlewares/clear-cache.middleware';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const api = await NestFactory.create(ApiModule);
+
+  api.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidUnknownValues: true,
+      transform: true,
+    }),
+  );
 
   api.useGlobalFilters(new HttpExceptionFilter());
   api.use(ClearCacheMiddleware.use);

@@ -16,6 +16,8 @@ export type DepartmentIdentifier = PickOneOf<
   'id' | 'name' | 'acronym' | 'manager_id'
 >;
 
+export type DepartmentNameOrID = PickOneOf<Department, 'name' | 'id'>;
+
 export type DepartmentFilters = Prettify<
   PrismaPaginationModel & {
     orderBy?:
