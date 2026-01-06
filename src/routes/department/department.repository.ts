@@ -65,7 +65,11 @@ export class DepartmentRepository {
     });
 
     if (!department)
-      throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+      throw new NotFoundException(
+        identifier.manager_id
+          ? DepartmentErrors.NOT_FOUND.MANAGER
+          : DepartmentErrors.NOT_FOUND.DEPARTMENT,
+      );
 
     return department;
   }
@@ -121,7 +125,10 @@ export class DepartmentRepository {
     try {
       return await this.prisma.department.update({
         ...PrismaDepartmentPayload,
-        where: identifier as DepartmentWhereUniqueInput,
+        where: {
+          ...(identifier as DepartmentWhereUniqueInput),
+          is_active: true,
+        },
         data,
       });
     } catch (err) {
@@ -160,6 +167,24 @@ export class DepartmentRepository {
 
       throw new InternalServerErrorException(
         DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_DELETE,
+        { cause: err },
+      );
+    }
+  }
+
+  async enable(identifier: DepartmentIdentifier): Promise<DepartmentEntity> {
+    try {
+      return await this.prisma.department.update({
+        ...PrismaDepartmentPayload,
+        where: identifier as DepartmentWhereUniqueInput,
+        data: { is_active: true, deleted_at: null },
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
+        throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+
+      throw new InternalServerErrorException(
+        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_UNDELETE,
         { cause: err },
       );
     }

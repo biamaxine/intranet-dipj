@@ -39,4 +39,8 @@ export class DepartmentService {
   disable(identifier: DepartmentNameOrID) {
     return this.repository.disable(identifier);
   }
+
+  enable(identifier: DepartmentNameOrID) {
+    return this.repository.enable(identifier);
+  }
 }

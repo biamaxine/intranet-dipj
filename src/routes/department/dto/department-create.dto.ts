@@ -6,10 +6,10 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import { ToUpperCase } from 'src/shared/decorators/class-transformer.decorators';
 import { IsPhone } from 'src/shared/decorators/class-validator.decorators';
 
 import { DepartmentCreate } from '../types/department.types';
-import { ToUpperCase } from 'src/shared/decorators/class-transformer.decorators';
 
 export class DepartmentCreateDto implements DepartmentCreate {
   @ApiProperty({ required: false, type: String })
