@@ -1,17 +1,30 @@
 import { User } from 'generated/prisma/client';
 import { UserOrderByWithRelationInput } from 'generated/prisma/models';
 import { PrismaPaginationModel } from 'src/shared/models/prisma/pagination.model';
-import { OmitBySuffix, OmitType } from 'src/shared/utils/types/omit.types';
+import {
+  OmitByPrefix,
+  OmitBySuffix,
+  OmitType,
+} from 'src/shared/utils/types/omit.types';
 import { PartialType } from 'src/shared/utils/types/partial.types';
-import { PickBySuffix, PickOneOf } from 'src/shared/utils/types/pick.types';
+import { PickOneOf } from 'src/shared/utils/types/pick.types';
 import { Prettify } from 'src/shared/utils/types/prettify.type';
-import { RequiredType } from 'src/shared/utils/types/required.types';
 
+// export type UserCreate = Prettify<
+//   PartialType<Omit<OmitBySuffix<User, '_at'>, 'id' | 'is_active'>, null> & {
+//     is_manager?: boolean;
+//   }
+// >;
 export type UserCreate = Prettify<
-  PartialType<OmitBySuffix<User, '_at' | 'is_active'>, null> & {
+  PartialType<
+    Omit<OmitBySuffix<OmitByPrefix<User, 'is_'>, '_at'>, 'id'>,
+    null
+  > & {
     is_manager?: boolean;
   }
 >;
+
+export type UserLogin = PickOneOf<OmitType<Pick<User, 'email' | 'cpf'>, null>>;
 
 export type UserIdentifier = PickOneOf<User, 'id' | 'cpf' | 'email' | 'phone'>;
 
@@ -28,7 +41,7 @@ export type UserFilters = Prettify<
 >;
 
 export type UserUpdate = Prettify<
-  Partial<Omit<User, 'id' | 'is_active' | keyof PickBySuffix<User, '_at'>>> & {
+  Partial<Omit<OmitBySuffix<User, '_at'>, 'id' | 'is_active'>> & {
     is_manager?: boolean;
   }
 >;

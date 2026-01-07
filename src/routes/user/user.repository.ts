@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -32,6 +33,7 @@ import {
   UserEnable,
   UserFilters,
   UserIdentifier,
+  UserLogin,
   UserUpdate,
 } from './types/user.types';
 
@@ -58,10 +60,10 @@ export class UserRepository {
     }
   }
 
-  async readBySignIn(email: string): Promise<IUserSignInEntity> {
+  async readBySignIn(login: UserLogin): Promise<IUserSignInEntity> {
     const user = await this.prisma.user.findUnique({
       ...PrismaUserSignInPayload,
-      where: { email },
+      where: login as UserWhereUniqueInput,
     });
 
     if (!user)
@@ -70,10 +72,16 @@ export class UserRepository {
     return user;
   }
 
-  async readOne(identifier: UserIdentifier): Promise<UserEntity> {
+  async readOne(
+    identifier: UserIdentifier,
+    find_disabled = false,
+  ): Promise<UserEntity> {
     const user = await this.prisma.user.findUnique({
       ...PrismaUserPayload,
-      where: identifier as UserWhereUniqueInput,
+      where: {
+        ...(identifier as UserWhereUniqueInput),
+        ...(find_disabled ? {} : { is_active: true }),
+      },
     });
 
     if (!user) throw new NotFoundException(UserErrors.NOT_FOUND.USER);
@@ -155,7 +163,7 @@ export class UserRepository {
         throw new NotFoundException(UserErrors.NOT_FOUND.USER);
 
       throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_DELETE,
+        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_DISABLE,
         { cause: err },
       );
     }
@@ -176,11 +184,16 @@ export class UserRepository {
         },
       });
     } catch (err) {
-      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
-        throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === 'P2025')
+          throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+
+        if (err.code === 'P2002')
+          throw new ConflictException(UserErrors.CONFLICT.USER);
+      }
 
       throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_UNDELETE,
+        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_ENABLE,
         { cause: err },
       );
     }
@@ -230,7 +243,7 @@ export class UserRepository {
       }
 
       throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
+        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_UPDATE,
         { cause: err },
       );
     }
@@ -277,7 +290,7 @@ export class UserRepository {
       }
 
       throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
+        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_UPDATE,
         { cause: err },
       );
     }

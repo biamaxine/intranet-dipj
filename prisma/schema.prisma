@@ -33,7 +33,7 @@ model Department {
 
   // Relations
   users    User[]
-  manager  User?                       @relation("Management", fields: [manager_id], references: [id])
+  manager  User?                       @relation("Management", fields: [manager_id], references: [id], onDelete: SetNull)
   programs DepartmentProgramRelation[]
 
   @@map("Departments")

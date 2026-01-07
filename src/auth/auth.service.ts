@@ -60,21 +60,19 @@ export class AuthService {
   async validate(payload: JwtPayloadModel): Promise<UserEntity> {
     const key = `user:${payload.sub}`;
 
-    try {
-      return (
-        (await this.cache.get<UserEntity>(key)) ||
-        (await this.prisma.user
-          .findUniqueOrThrow({
-            ...PrismaUserPayload,
-            where: { id: payload.sub },
-          })
-          .then(async user => {
-            await this.cache.set(key, user, 60000);
-            return user;
-          }))
-      );
-    } catch {
-      throw new AccessDeniedException('Usuário não autorizado');
-    }
+    const cachedUser = await this.cache.get<UserEntity>(key);
+    if (cachedUser) return cachedUser;
+
+    const user = await this.prisma.user.findUnique({
+      ...PrismaUserPayload,
+      where: { id: payload.sub },
+    });
+
+    if (!user)
+      throw new AccessDeniedException('Usuário não autorizado ou inexistente');
+
+    await this.cache.set(key, user);
+
+    return user;
   }
 }
