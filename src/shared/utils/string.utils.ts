@@ -1,33 +1,21 @@
-export const PRIMITIVE_TYPE = {
-  string: 'string',
-  number: 'number',
-  bigint: 'bigint',
-  boolean: 'boolean',
-  symbol: 'symbol',
-  undefined: 'undefined',
-  function: 'function',
-  object: 'object',
-} as const;
+import { randomItem, shuffle } from './array.utils';
+import { isEmpty } from './object.utils';
 
-export type PRIMITIVE_TYPE = keyof typeof PRIMITIVE_TYPE;
-export const PRIMITIVE_TYPES = Object.values(PRIMITIVE_TYPE);
+export type TypeMap = {
+  string: string;
+  number: number;
+  bigint: bigint;
+  boolean: boolean;
+  symbol: symbol;
+  undefined: undefined;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+  function: Function;
+  object: object;
+  null: null;
+};
 
-export type ToType<T extends PRIMITIVE_TYPE> = T extends 'string'
-  ? string
-  : T extends 'number'
-    ? number
-    : T extends 'bigint'
-      ? bigint
-      : T extends 'boolean'
-        ? boolean
-        : T extends 'symbol'
-          ? symbol
-          : T extends 'undefined'
-            ? undefined
-            : T extends 'function'
-              ? // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-                Function
-              : object;
+export type TypeString = keyof TypeMap;
+export type ToType<T extends keyof TypeMap> = TypeMap[T];
 
 // Literals
 export function isLiteral<L extends string>(
@@ -52,25 +40,12 @@ export function literalIsNotIn<T extends string, L extends T>(
 }
 
 // Types
-export function typeOf<T extends PRIMITIVE_TYPE>(
-  value: unknown,
-  type: T,
-): value is ToType<T> {
-  return typeof value === type;
-}
-
-export function typeOfIsIn<T extends PRIMITIVE_TYPE>(
+export function typeOf<T extends TypeString>(
   value: unknown,
   ...types: T[]
 ): value is ToType<T> {
-  return types.includes(typeof value as T);
-}
-
-export function typeOfIsNotIn<T extends PRIMITIVE_TYPE>(
-  value: unknown,
-  ...types: T[]
-): value is ToType<Exclude<PRIMITIVE_TYPE, T>> {
-  return !typeOfIsIn(value, ...types);
+  const type = value === null ? 'null' : typeof value;
+  return types.includes(type as T);
 }
 
 // Cases
@@ -133,4 +108,64 @@ export function toKebabCase(str: string, toConstant?: boolean): string {
 
 export function toPascalCase(str: string): string {
   return str ? capitalizeWord(toCamelCase(str)) : '';
+}
+
+export type StrRandomConfig =
+  | { length: number }
+  | { uppercases?: number; lowercases?: number; digits?: number };
+
+const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz';
+const LOWERCASE = ALPHABET.split('');
+const UPPERCASE = ALPHABET.toUpperCase().split('');
+
+export function strRandom(config?: StrRandomConfig): string {
+  const validate = (v?: number) => v && (!Number.isInteger(v) || v < 0);
+
+  if (!config || isEmpty(config)) config = { length: 9 };
+  else if (Object.values(config).some(validate))
+    throw new Error('As propriedades da configuração precisam ser inteiros');
+
+  const result: string[] = [];
+
+  if ('length' in config) {
+    const balance = Math.floor(config.length / 3);
+    for (const chars of [DIGITS, LOWERCASE, UPPERCASE]) {
+      for (let i = 0; i < balance; i++) result.push(randomItem(chars)!);
+    }
+
+    const rest = config.length % 3;
+    if (rest > 0) {
+      const chars = [...DIGITS, ...LOWERCASE, ...UPPERCASE];
+      for (let i = 0; i < rest; i++) result.push(randomItem(chars)!);
+    }
+  } else {
+    const { digits = 0, lowercases = 0, uppercases = 0 } = config;
+    for (const chars of [DIGITS, LOWERCASE, UPPERCASE]) {
+      for (const count of [digits, lowercases, uppercases])
+        for (let i = 0; i < count; i++) result.push(randomItem(chars)!);
+    }
+  }
+
+  return shuffle(result).join('');
+}
+
+const REPEAT_DIGITS_REGEX = /^(\d)\1{10}$/;
+
+export function isCPF(cpf: unknown): boolean {
+  if (!typeOf(cpf, 'string')) return false;
+
+  const clean = cpf.replace(/\D/g, '');
+
+  if (clean.length !== 11 || REPEAT_DIGITS_REGEX.test(clean)) return false;
+
+  const validateDigit = (limit: number): boolean => {
+    let sum = 0;
+    for (let i = 0; i < limit; i++) sum += Number(clean[i]) * (limit + 1 - i);
+    const remainder = (sum * 10) % 11;
+    const expectedDigit = remainder >= 10 ? 0 : remainder;
+    return expectedDigit === Number(clean[limit]);
+  };
+
+  return validateDigit(9) && validateDigit(10);
 }
