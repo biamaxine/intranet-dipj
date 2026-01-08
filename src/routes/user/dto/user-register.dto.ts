@@ -45,5 +45,5 @@ export class UserRegisterDto implements Omit<UserCreate, 'password'> {
   @ApiProperty({ required: false, type: Boolean, default: false })
   @IsOptional()
   @IsBoolean()
-  is_manager?: boolean;
+  is_manager?: boolean | undefined;
 }

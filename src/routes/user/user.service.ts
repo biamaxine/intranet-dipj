@@ -1,12 +1,12 @@
 import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { ApiMetadata } from 'src/api.metadata';
 import { AuthService } from 'src/auth/auth.service';
 import { strRandom } from 'src/shared/utils/string.utils';
 
-import { UserErrors } from './classes/user-errors';
+import { InvalidLoginException } from './classes/user.exceptions';
 import { UserEnableDto } from './dto/user-enable.dto';
 import { UserRecoveryPasswordDto } from './dto/user-recovery-password.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
@@ -248,6 +248,6 @@ export class UserService {
     user: PasswordObject,
   ): Promise<void> {
     if (await bcrypt.compare(password, user.password)) return;
-    throw new UnauthorizedException(UserErrors.UNAUTHORIZED.INVALID_SIGN_IN);
+    throw new InvalidLoginException();
   }
 }

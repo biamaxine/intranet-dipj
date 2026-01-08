@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   DepartmentUpdateInput,
   PrismaClientKnownRequestError,
@@ -17,7 +11,17 @@ import {
 import { PrismaService } from 'src/shared/services/prisma/prisma.service';
 import { isEmpty, isNotEmpty } from 'src/shared/utils/object.utils';
 
-import { DepartmentErrors } from './classes/department-errors';
+import {
+  DepartmentConflictException,
+  DepartmentNotFoundException,
+  InactiveManagerException,
+  ManagerNotFoundException,
+  NoProvidedDepartmentDataException,
+  DEPARTMENT_CREATED_FAILURE,
+  DEPARTMENT_DISABLED_FAILURE,
+  DEPARTMENT_ENABLED_FAILURE,
+  DEPARTMENT_UPDATED_FAILURE,
+} from './classes/department.exceptions';
 import {
   DepartmentEntities,
   DepartmentEntity,
@@ -46,15 +50,11 @@ export class DepartmentRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002')
-        throw new ConflictException({
-          message: DepartmentErrors.CONFLICT.DEPARTMENT,
-          keys: err.meta?.target,
-        });
+        throw new DepartmentConflictException({ keys: err.meta?.target });
 
-      throw new InternalServerErrorException(
-        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(DEPARTMENT_CREATED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -65,11 +65,11 @@ export class DepartmentRepository {
     });
 
     if (!department)
-      throw new NotFoundException(
+      throw new (
         identifier.manager_id
-          ? DepartmentErrors.NOT_FOUND.MANAGER
-          : DepartmentErrors.NOT_FOUND.DEPARTMENT,
-      );
+          ? ManagerNotFoundException
+          : DepartmentNotFoundException
+      )();
 
     return department;
   }
@@ -113,10 +113,7 @@ export class DepartmentRepository {
     identifier: DepartmentIdentifier,
     model: DepartmentUpdate,
   ): Promise<DepartmentEntity> {
-    if (isEmpty(model))
-      throw new BadRequestException(
-        DepartmentErrors.BAD_REQUEST.NO_PROVIDED_DATA,
-      );
+    if (isEmpty(model)) throw new NoProvidedDepartmentDataException();
 
     if (model.manager_id) await this.checkManager(model.manager_id);
 
@@ -133,20 +130,15 @@ export class DepartmentRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === 'P2025')
-          throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+        if (err.code === 'P2025') throw new DepartmentNotFoundException();
 
         if (err.code === 'P2002')
-          throw new ConflictException({
-            message: DepartmentErrors.CONFLICT.DEPARTMENT,
-            keys: err.meta?.target,
-          });
+          throw new DepartmentConflictException({ keys: err.meta?.target });
       }
 
-      throw new InternalServerErrorException(
-        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_UPDATE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(DEPARTMENT_UPDATED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -163,12 +155,11 @@ export class DepartmentRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
-        throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+        throw new DepartmentNotFoundException();
 
-      throw new InternalServerErrorException(
-        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_DELETE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(DEPARTMENT_DISABLED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -181,12 +172,11 @@ export class DepartmentRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
-        throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+        throw new DepartmentNotFoundException();
 
-      throw new InternalServerErrorException(
-        DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_UNDELETE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(DEPARTMENT_ENABLED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -217,12 +207,7 @@ export class DepartmentRepository {
       select: { is_active: true },
     });
 
-    if (!manager)
-      throw new NotFoundException(DepartmentErrors.NOT_FOUND.MANAGER);
-
-    if (!manager.is_active)
-      throw new BadRequestException(
-        DepartmentErrors.BAD_REQUEST.MANAGER_INACTIVE,
-      );
+    if (!manager) throw new ManagerNotFoundException();
+    if (!manager.is_active) throw new InactiveManagerException();
   }
 }

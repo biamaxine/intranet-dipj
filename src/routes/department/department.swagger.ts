@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,7 +8,17 @@ import { SwaggerParamsInput } from 'src/shared/decorators/swagger/params.decorat
 import { SwaggerQueriesInput } from 'src/shared/decorators/swagger/queries.decorator';
 import { SwaggerResponsesInput } from 'src/shared/decorators/swagger/response.decorator';
 
-import { DepartmentErrors } from './classes/department-errors';
+import {
+  DepartmentConflictException,
+  DepartmentNotFoundException,
+  InactiveManagerException,
+  ManagerNotFoundException,
+  NoProvidedDepartmentDataException,
+  DEPARTMENT_CREATED_FAILURE,
+  DEPARTMENT_DISABLED_FAILURE,
+  DEPARTMENT_ENABLED_FAILURE,
+  DEPARTMENT_UPDATED_FAILURE,
+} from './classes/department.exceptions';
 import {
   DepartmentEntities,
   DepartmentEntity,
@@ -34,22 +43,22 @@ export abstract class DepartmentSwagger {
       },
       BAD_REQUEST: {
         description: 'BAD REQUEST - Propriedades fornecidas são inválidas',
-        type: BadRequestException,
-        example: new BadRequestException(['specific errors']),
+        type: NoProvidedDepartmentDataException,
+        example: new NoProvidedDepartmentDataException(),
       },
       CONFLICT: {
         description: 'CONFLICT - Alguma propriedade única já foi utilizada',
-        type: ConflictException,
-        example: new ConflictException(DepartmentErrors.CONFLICT.DEPARTMENT),
+        type: DepartmentConflictException,
+        example: new DepartmentConflictException({
+          keys: ['...violated keys'],
+        }),
       },
       INTERNAL_SERVER_ERROR: {
         description:
           'INTERNAL SERVER ERROR - Não foi possível criar o departamento',
-        type: ConflictException,
-        example: new ConflictException(
-          DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
-          { cause: new Error('original error') },
-        ),
+        example: new InternalServerErrorException(DEPARTMENT_CREATED_FAILURE, {
+          cause: new Error('original error'),
+        }),
       },
     },
   };
@@ -74,13 +83,12 @@ export abstract class DepartmentSwagger {
       },
       BAD_REQUEST: {
         description: 'BAD REQUEST - ID de gerente fornecido é inválido',
-        type: BadRequestException,
         example: new BadRequestException(['specific errors']),
       },
       NOT_FOUND: {
         description: 'NOT FOUND - Departamento não encontrado',
-        type: NotFoundException,
-        example: new NotFoundException(DepartmentErrors.NOT_FOUND.MANAGER),
+        type: ManagerNotFoundException,
+        example: new ManagerNotFoundException(),
       },
     },
   };
@@ -110,8 +118,8 @@ export abstract class DepartmentSwagger {
       },
       NOT_FOUND: {
         description: 'NOT FOUND - Departamento não encontrado',
-        type: NotFoundException,
-        example: new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT),
+        type: DepartmentNotFoundException,
+        example: new DepartmentNotFoundException(),
       },
     },
   };
@@ -240,7 +248,6 @@ export abstract class DepartmentSwagger {
       },
       BAD_REQUEST: {
         description: 'BAD REQUEST',
-        type: BadRequestException,
         examples: {
           identifier: {
             summary: 'Nome ou ID fornecidos são inválidos',
@@ -248,9 +255,7 @@ export abstract class DepartmentSwagger {
           },
           no_data_provided: {
             summary: 'Nenhum Dado foi fornecido para atualização',
-            value: new BadRequestException(
-              DepartmentErrors.BAD_REQUEST.NO_PROVIDED_DATA,
-            ),
+            value: new NoProvidedDepartmentDataException(),
           },
           invalid_provided_data: {
             summary: 'Dados fornecidos para atualização são inválidos',
@@ -258,9 +263,7 @@ export abstract class DepartmentSwagger {
           },
           inactive_manager: {
             summary: 'Usuário escolhido para gerente encontra-se inativo',
-            value: new BadRequestException(
-              DepartmentErrors.BAD_REQUEST.MANAGER_INACTIVE,
-            ),
+            value: new InactiveManagerException(),
           },
         },
       },
@@ -270,11 +273,11 @@ export abstract class DepartmentSwagger {
         examples: {
           department: {
             summary: 'Departamento não encontrado',
-            value: new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT),
+            value: new DepartmentNotFoundException(),
           },
           manager: {
             summary: 'Gerente não encontrado',
-            value: new NotFoundException(DepartmentErrors.NOT_FOUND.MANAGER),
+            value: new ManagerNotFoundException(),
           },
         },
       },
@@ -283,10 +286,9 @@ export abstract class DepartmentSwagger {
         description:
           'INTERNAL SERVER ERROR - Não foi possível atualizar o departamento',
         type: InternalServerErrorException,
-        example: new InternalServerErrorException(
-          DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_UPDATE,
-          { cause: new Error('original error') },
-        ),
+        example: new InternalServerErrorException(DEPARTMENT_UPDATED_FAILURE, {
+          cause: new Error('original error'),
+        }),
       },
     },
   };
@@ -310,10 +312,9 @@ export abstract class DepartmentSwagger {
         description:
           'INTERNAL SERVER ERROR - Não foi possivel desabilitar o departamento',
         type: InternalServerErrorException,
-        example: new InternalServerErrorException(
-          DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_DELETE,
-          { cause: new Error('original error') },
-        ),
+        example: new InternalServerErrorException(DEPARTMENT_DISABLED_FAILURE, {
+          cause: new Error('original error'),
+        }),
       },
     },
   };
@@ -337,10 +338,9 @@ export abstract class DepartmentSwagger {
         description:
           'INTERNAL SERVER ERROR - Não foi possivel habilitar o departamento',
         type: InternalServerErrorException,
-        example: new InternalServerErrorException(
-          DepartmentErrors.INTERNAL_SERVER_ERROR.UNABLE_UNDELETE,
-          { cause: new Error('original error') },
-        ),
+        example: new InternalServerErrorException(DEPARTMENT_ENABLED_FAILURE, {
+          cause: new Error('original error'),
+        }),
       },
     },
   };

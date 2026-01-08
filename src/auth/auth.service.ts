@@ -17,7 +17,13 @@ import { UserEntity } from 'src/routes/user/entities/user.entity';
 import { PrismaUserPayload } from 'src/routes/user/types/prisma/user-payload.type';
 import { PrismaService } from 'src/shared/services/prisma/prisma.service';
 
-import { AccessDeniedException } from './classes/auth.exceptions';
+import {
+  AccessDeniedException,
+  DisabledTokenException,
+  ExpiredTokenException,
+  InvalidTokenException,
+  UserNotAuthenticatedException,
+} from './classes/auth.exceptions';
 import { JwtPayloadModel } from './models/jwt-payload.model';
 
 @Injectable()
@@ -36,14 +42,11 @@ export class AuthService {
     try {
       return this.jwt.verify(token, opts);
     } catch (err) {
-      if (err instanceof TokenExpiredError)
-        throw new AccessDeniedException('Token expirado');
+      if (err instanceof TokenExpiredError) throw new ExpiredTokenException();
 
-      if (err instanceof NotBeforeError)
-        throw new AccessDeniedException('Token não foi validado');
+      if (err instanceof NotBeforeError) throw new DisabledTokenException();
 
-      if (err instanceof JsonWebTokenError)
-        throw new AccessDeniedException('Token invalido');
+      if (err instanceof JsonWebTokenError) throw new InvalidTokenException();
 
       throw new InternalServerErrorException(
         'Não foi possível verificar o Token',
@@ -68,8 +71,7 @@ export class AuthService {
       where: { id: payload.sub },
     });
 
-    if (!user)
-      throw new AccessDeniedException('Usuário não autorizado ou inexistente');
+    if (!user) throw new UserNotAuthenticatedException();
 
     await this.cache.set(key, user);
 

@@ -1,12 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
   PrismaClientKnownRequestError,
   UserCreateInput,
@@ -17,8 +9,20 @@ import {
 import { PrismaService } from 'src/shared/services/prisma/prisma.service';
 import { isEmpty, isNotEmpty } from 'src/shared/utils/object.utils';
 
-import { DepartmentErrors } from '../department/classes/department-errors';
-import { UserErrors } from './classes/user-errors';
+import {
+  DepartmentNotFoundException,
+  InactiveDepartmentException,
+} from '../department/classes/department.exceptions';
+import {
+  InvalidLoginException,
+  NoProvidedUserDataException,
+  USER_CREATED_FAILURE,
+  USER_DISABLED_FAILURE,
+  USER_ENABLED_FAILURE,
+  USER_UPDATED_FAILURE,
+  UserConflictException,
+  UserNotFoundException,
+} from './classes/user.exceptions';
 import {
   IUserSignInEntity,
   UserEntities,
@@ -48,15 +52,11 @@ export class UserRepository {
       return await this.prisma.user.create({ ...PrismaUserPayload, data });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002')
-        throw new ConflictException({
-          message: UserErrors.CONFLICT.USER,
-          keys: err.meta?.target,
-        });
+        throw new UserConflictException({ keys: err.meta?.target });
 
-      throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(USER_CREATED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -66,8 +66,7 @@ export class UserRepository {
       where: login as UserWhereUniqueInput,
     });
 
-    if (!user)
-      throw new UnauthorizedException(UserErrors.UNAUTHORIZED.INVALID_SIGN_IN);
+    if (!user) throw new InvalidLoginException();
 
     return user;
   }
@@ -84,7 +83,7 @@ export class UserRepository {
       },
     });
 
-    if (!user) throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+    if (!user) throw new UserNotFoundException();
 
     return user;
   }
@@ -123,8 +122,7 @@ export class UserRepository {
     identifier: UserIdentifier,
     model: UserUpdate,
   ): Promise<UserEntity> {
-    if (isEmpty(model))
-      throw new BadRequestException(UserErrors.BAD_REQUEST.NO_PROVIDED_DATA);
+    if (isEmpty(model)) throw new NoProvidedUserDataException();
 
     const { department_id, is_manager, ...rest } = model;
 
@@ -160,12 +158,11 @@ export class UserRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025')
-        throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+        throw new UserNotFoundException();
 
-      throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_DISABLE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(USER_DISABLED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -185,17 +182,15 @@ export class UserRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === 'P2025')
-          throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+        if (err.code === 'P2025') throw new UserNotFoundException();
 
         if (err.code === 'P2002')
-          throw new ConflictException(UserErrors.CONFLICT.USER);
+          throw new UserConflictException({ keys: err.meta?.target });
       }
 
-      throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_ENABLE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(USER_ENABLED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -207,11 +202,9 @@ export class UserRepository {
       select: { id: true, is_active: true },
     });
 
-    if (!department)
-      throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+    if (!department) throw new DepartmentNotFoundException();
 
-    if (!department.is_active)
-      throw new BadRequestException(DepartmentErrors.BAD_REQUEST.INACTIVE);
+    if (!department.is_active) throw new InactiveDepartmentException();
 
     return {
       ...rest,
@@ -232,20 +225,15 @@ export class UserRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === 'P2025')
-          throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+        if (err.code === 'P2025') throw new UserNotFoundException();
 
         if (err.code === 'P2002')
-          throw new ConflictException({
-            message: UserErrors.CONFLICT.USER,
-            keys: err.meta?.target,
-          });
+          throw new UserConflictException({ keys: err.meta?.target });
       }
 
-      throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_UPDATE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(USER_UPDATED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -259,11 +247,9 @@ export class UserRepository {
       select: { id: true, is_active: true },
     });
 
-    if (!department)
-      throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+    if (!department) throw new DepartmentNotFoundException();
 
-    if (!department.is_active)
-      throw new BadRequestException(DepartmentErrors.BAD_REQUEST.INACTIVE);
+    if (!department.is_active) throw new InactiveDepartmentException();
 
     const data = {
       ...model,
@@ -279,20 +265,15 @@ export class UserRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
-        if (err.code === 'P2025')
-          throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+        if (err.code === 'P2025') throw new UserNotFoundException();
 
         if (err.code === 'P2002')
-          throw new ConflictException({
-            message: UserErrors.CONFLICT.USER,
-            keys: err.meta?.target,
-          });
+          throw new UserConflictException({ keys: err.meta?.target });
       }
 
-      throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_UPDATE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(USER_UPDATED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -310,7 +291,7 @@ export class UserRepository {
       },
     });
 
-    if (!user) throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+    if (!user) throw new UserNotFoundException();
 
     // Se o usuário for gerente de outro departamento que não o seu, força a
     // atualização de management.
@@ -335,15 +316,11 @@ export class UserRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002')
-        throw new ConflictException({
-          message: UserErrors.CONFLICT.USER,
-          keys: err.meta?.target,
-        });
+        throw new UserConflictException({ keys: err.meta?.target });
 
-      throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(USER_UPDATED_FAILURE, {
+        cause: err,
+      });
     }
   }
 
@@ -368,13 +345,11 @@ export class UserRepository {
       }),
     ]);
 
-    if (!user) throw new NotFoundException(UserErrors.NOT_FOUND.USER);
+    if (!user) throw new UserNotFoundException();
 
-    if (!department)
-      throw new NotFoundException(DepartmentErrors.NOT_FOUND.DEPARTMENT);
+    if (!department) throw new DepartmentNotFoundException();
 
-    if (!department.is_active)
-      throw new BadRequestException(DepartmentErrors.BAD_REQUEST.INACTIVE);
+    if (!department.is_active) throw new InactiveDepartmentException();
 
     const connect = { id: department.id };
     const data: UserUpdateInput = {
@@ -392,15 +367,11 @@ export class UserRepository {
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002')
-        throw new ConflictException({
-          message: UserErrors.CONFLICT.USER,
-          keys: err.meta?.target,
-        });
+        throw new UserConflictException({ keys: err.meta?.target });
 
-      throw new InternalServerErrorException(
-        UserErrors.INTERNAL_SERVER_ERROR.UNABLE_CREATE,
-        { cause: err },
-      );
+      throw new InternalServerErrorException(USER_UPDATED_FAILURE, {
+        cause: err,
+      });
     }
   }
 }
