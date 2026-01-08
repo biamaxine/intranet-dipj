@@ -4,9 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { ApiMetadata } from 'src/api.metadata';
 import { AuthService } from 'src/auth/auth.service';
-import { strRandom } from 'src/shared/utils/string.utils';
+import { strRandom, typeOf } from 'src/shared/utils/string.utils';
 
-import { InvalidLoginException } from './classes/user.exceptions';
+import {
+  InvalidLoginException,
+  UserConflictException,
+} from './classes/user.exceptions';
 import { UserEnableDto } from './dto/user-enable.dto';
 import { UserRecoveryPasswordDto } from './dto/user-recovery-password.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
@@ -19,6 +22,7 @@ import { UserUpdateDto } from './dto/user-update.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserFilters, UserIdentifier, UserUpdate } from './types/user.types';
 import { UserRepository } from './user.repository';
+import { UserVerifyEmailDto } from './dto/user-verify-email.dto';
 
 interface GeneratedPassword {
   password: string;
@@ -106,8 +110,15 @@ export class UserService {
 
     if (email === user.email) return;
 
+    let exist: UserEntity | undefined = undefined;
+    try {
+      exist = await this.repository.readOne({ email });
+    } catch {}
+
+    if (exist) throw new UserConflictException({ keys: ['email'] });
+
     const token = this.auth.create(
-      { sub: email },
+      { sub: user.email!, email: email },
       { secret: this.config.get<string>('MAILER_SECRET') },
     );
 
@@ -124,12 +135,20 @@ export class UserService {
     }
   }
 
-  async verifyEmail(user: UserEntity, token: string): Promise<UserEntity> {
-    const email = this.auth.verify(token, {
+  async verifyEmail(token: string, dto: UserVerifyEmailDto): Promise<string> {
+    const payload = this.auth.verify(token, {
       secret: this.config.get('MAILER_SECRET'),
-    }).sub;
+    });
+    const email = payload.sub;
+    const newEmail = payload.email as string;
 
-    return await this.repository.update({ id: user.id }, { email });
+    const user = await this.repository.readBySignIn({ email });
+    const { password } = dto;
+    await this.checkPassword(password, user);
+
+    await this.repository.update({ email }, { email: newEmail });
+
+    return await this.signIn({ login: { email: newEmail }, password });
   }
 
   async updatePassword(

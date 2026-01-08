@@ -23,6 +23,7 @@ import { UserEntity } from './entities/user.entity';
 import { UserFiltersPipe } from './pipes/user-filters.pipe';
 import { UserIdentifierPipe } from './pipes/user-identifier.pipe';
 import { UserService } from './user.service';
+import { UserVerifyEmailDto } from './dto/user-verify-email.dto';
 
 @Controller('')
 export class UserController {
@@ -73,9 +74,8 @@ export class UserController {
   }
 
   @Patch('users/me/verify-email/:token')
-  @JwtAuth()
-  VERIFY_EMAIL(@User() user: UserEntity, @Param('token') token: string) {
-    return this.service.verifyEmail(user, token);
+  VERIFY_EMAIL(@Param('token') token: string, dto: UserVerifyEmailDto) {
+    return this.service.verifyEmail(token, dto);
   }
 
   @Patch('users/me/update-password')

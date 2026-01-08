@@ -200,6 +200,7 @@ export abstract class DepartmentSwagger {
           '* **Nome** (`name`)',
           '* **Sigla** (`acronym`)',
           '* **Email** (`email`)',
+          '* **Telefone** (`phone`)',
           '* **Data de Criação** (`created_at`)',
           '',
           'Use `"asc"` para crescente e `"desc"` para decrescente',
