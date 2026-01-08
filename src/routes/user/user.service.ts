@@ -104,7 +104,7 @@ export class UserService {
   async updateEmail(user: UserEntity, dto: UserUpdateEmailDto): Promise<void> {
     const { frontend_url, email } = dto;
 
-    if (email === user.email) return {};
+    if (email === user.email) return;
 
     const token = this.auth.create(
       { sub: email },
