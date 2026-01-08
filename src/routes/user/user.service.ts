@@ -10,14 +10,11 @@ import { UserErrors } from './classes/user-errors';
 import { UserEnableDto } from './dto/user-enable.dto';
 import { UserRecoveryPasswordDto } from './dto/user-recovery-password.dto';
 import { UserRegisterDto } from './dto/user-register.dto';
-import { UserRequestPasswordRecovery } from './dto/user-request-password-recovery.dto';
+import { UserRequestPasswordRecoveryDto } from './dto/user-request-password-recovery.dto';
 import { UserSignInDto } from './dto/user-sign-in.dto';
-import {
-  UserRequestEmailUpdateDto,
-  UserUpdateEmailDto,
-} from './dto/user-update-email.dto';
+import { UserUpdateEmailDto } from './dto/user-update-email.dto';
 import { UserUpdateMeDto } from './dto/user-update-me.dto';
-import { UserUpdatePassword } from './dto/user-update-password.dto';
+import { UserUpdatePasswordDto } from './dto/user-update-password.dto';
 import { UserUpdateDto } from './dto/user-update.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserFilters, UserIdentifier, UserUpdate } from './types/user.types';
@@ -95,7 +92,7 @@ export class UserService {
 
     if (email) {
       try {
-        await this.requestEmailUpdate(user, { frontend_url, email });
+        await this.updateEmail(user, { frontend_url, email });
       } catch (err) {
         console.error(err);
       }
@@ -104,10 +101,7 @@ export class UserService {
     return await this.repository.update({ id: user.id }, rest);
   }
 
-  async requestEmailUpdate(
-    user: UserEntity,
-    dto: UserRequestEmailUpdateDto,
-  ): Promise<{ token?: string }> {
+  async updateEmail(user: UserEntity, dto: UserUpdateEmailDto): Promise<void> {
     const { frontend_url, email } = dto;
 
     if (email === user.email) return {};
@@ -128,11 +122,9 @@ export class UserService {
     } catch (err) {
       console.error(err);
     }
-
-    return this.config.get('NODE_ENV') === 'production' ? {} : { token };
   }
 
-  async updateEmail(user: UserEntity, token: string): Promise<UserEntity> {
+  async verifyEmail(user: UserEntity, token: string): Promise<UserEntity> {
     const email = this.auth.verify(token, {
       secret: this.config.get('MAILER_SECRET'),
     }).sub;
@@ -142,7 +134,7 @@ export class UserService {
 
   async updatePassword(
     user: UserEntity,
-    dto: UserUpdatePassword,
+    dto: UserUpdatePasswordDto,
   ): Promise<UserEntity> {
     const { password, newPassword } = dto;
 
@@ -159,8 +151,8 @@ export class UserService {
   }
 
   async requestPasswordRecovery(
-    dto: UserRequestPasswordRecovery,
-  ): Promise<{ token?: string }> {
+    dto: UserRequestPasswordRecoveryDto,
+  ): Promise<void> {
     const { frontend_url, login } = dto;
 
     const user = await this.repository.readOne(login);
@@ -181,8 +173,6 @@ export class UserService {
     } catch (err) {
       console.error(err);
     }
-
-    return this.config.get('NODE_ENV') === 'production' ? {} : { token };
   }
 
   async recoveryPassword(

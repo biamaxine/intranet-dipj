@@ -28,6 +28,7 @@ async function bootstrap() {
     .setDescription(API_METADATA.DESCRIPTION)
     .setVersion(API_METADATA.VERSION)
     .setContact(API_METADATA.AUTHOR, API_METADATA.WEBSITE, API_METADATA.EMAIL)
+    .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(api, config);
   SwaggerModule.setup('api', api, documentFactory);

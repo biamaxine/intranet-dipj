@@ -4,7 +4,7 @@ import { ToUserLogin } from 'src/shared/decorators/class-transformer.decorators'
 
 import { type UserLogin } from '../types/user.types';
 
-export class UserRequestPasswordRecovery {
+export class UserRequestPasswordRecoveryDto {
   @ApiProperty({
     type: String,
     description: 'CPF ou email do usuário',

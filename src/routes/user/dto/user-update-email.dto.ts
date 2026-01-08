@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsUrl } from 'class-validator';
 
-export class UserRequestEmailUpdateDto {
+export class UserUpdateEmailDto {
   @ApiProperty()
   @IsEmail({}, { message: 'Email precisa ser válido' })
   email: string;

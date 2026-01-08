@@ -151,11 +151,16 @@ export function strRandom(config?: StrRandomConfig): string {
 }
 
 const REPEAT_DIGITS_REGEX = /^(\d)\1{10}$/;
+const CLEAR_FORMAT = /^\D/g;
+
+export function clearCPF(cpf: string) {
+  return cpf.replace(CLEAR_FORMAT, '');
+}
 
 export function isCPF(cpf: unknown): boolean {
   if (!typeOf(cpf, 'string')) return false;
 
-  const clean = cpf.replace(/\D/g, '');
+  const clean = cpf.replace(CLEAR_FORMAT, '');
 
   if (clean.length !== 11 || REPEAT_DIGITS_REGEX.test(clean)) return false;
 

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsStrongPassword, MinLength } from 'class-validator';
 
-export class UserUpdatePassword {
+export class UserUpdatePasswordDto {
   @ApiProperty()
   @MinLength(8, { message: 'Uma senha não pode ter menos de 8 caracteres' })
   password: string;
