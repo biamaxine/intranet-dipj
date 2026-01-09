@@ -7,10 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { SwaggerOperation } from 'src/shared/decorators/swagger/operation.decorator';
-import { SwaggerParams } from 'src/shared/decorators/swagger/params.decorator';
-import { SwaggerQueries } from 'src/shared/decorators/swagger/queries.decorator';
-import { SwaggerResponses } from 'src/shared/decorators/swagger/response.decorator';
+import { SwaggerApi } from 'src/shared/decorators/swagger/api.decorator';
 
 import { DepartmentService } from './department.service';
 import { DepartmentSwagger } from './department.swagger';
@@ -19,7 +16,9 @@ import { DepartmentAcronymPipe } from './pipes/department-acronym.pipe';
 import { DepartmentFiltersPipe } from './pipes/department-filters.pipe';
 import { DepartmentManagerIdPipe } from './pipes/department-manager-id.pipe';
 import { DepartmentNameOrIdPipe } from './pipes/department-name-or-id.pipe';
+import { JwtAuth } from '../user/decorators/jwt-auth.decorator';
 
+@JwtAuth({ management: true })
 @Controller('departments')
 export class DepartmentController {
   private readonly toManagerID = new DepartmentManagerIdPipe().transform;
@@ -30,48 +29,37 @@ export class DepartmentController {
   constructor(private readonly service: DepartmentService) {}
 
   @Post()
-  @SwaggerOperation(DepartmentSwagger.CREATE)
-  @SwaggerResponses(DepartmentSwagger.CREATE.responses)
+  @SwaggerApi(DepartmentSwagger.CREATE)
   CREATE(@Body() dto: DepartmentCreateDto) {
     return this.service.create(dto);
   }
 
   @Get('manager/:manager_id')
-  @SwaggerOperation(DepartmentSwagger.READ_ONE_BY_MANAGER)
-  @SwaggerParams(DepartmentSwagger.READ_ONE_BY_MANAGER.params)
-  @SwaggerResponses(DepartmentSwagger.READ_ONE_BY_MANAGER.responses)
+  @SwaggerApi(DepartmentSwagger.READ_ONE_BY_MANAGER)
   READ_ONE_BY_MANAGER(@Param('manager_id') manager_id: string) {
     return this.service.readOneByManager(this.toManagerID(manager_id));
   }
 
   @Get('acronym/:acronym')
-  @SwaggerOperation(DepartmentSwagger.READ_ONE_BY_ACRONYM)
-  @SwaggerParams(DepartmentSwagger.READ_ONE_BY_ACRONYM.params)
-  @SwaggerResponses(DepartmentSwagger.READ_ONE_BY_ACRONYM.responses)
+  @SwaggerApi(DepartmentSwagger.READ_ONE_BY_ACRONYM)
   READ_ONE_BY_ACRONYM(@Param('acronym') acronym: string) {
     return this.service.readOneByAcronym(this.toAcronym(acronym));
   }
 
   @Get(':identifier')
-  @SwaggerOperation(DepartmentSwagger.READ_ONE)
-  @SwaggerParams(DepartmentSwagger.READ_ONE.params)
-  @SwaggerResponses(DepartmentSwagger.READ_ONE.responses)
+  @SwaggerApi(DepartmentSwagger.READ_ONE)
   READ_ONE(@Param('identifier') identifier: string) {
     return this.service.readOne(this.toNameOrID(identifier));
   }
 
   @Get()
-  @SwaggerOperation(DepartmentSwagger.READ_MANY)
-  @SwaggerQueries(DepartmentSwagger.READ_MANY.queries, { required: false })
-  @SwaggerResponses(DepartmentSwagger.READ_MANY.responses)
+  @SwaggerApi(DepartmentSwagger.READ_MANY, { query: { required: false } })
   READ_MANY(@Query() filters: any) {
     return this.service.readMany(this.toFilters(filters));
   }
 
   @Patch(':identifier')
-  @SwaggerOperation(DepartmentSwagger.UPDATE)
-  @SwaggerParams(DepartmentSwagger.UPDATE.params)
-  @SwaggerResponses(DepartmentSwagger.UPDATE.responses)
+  @SwaggerApi(DepartmentSwagger.UPDATE)
   UPDATE(
     @Param('identifier') identifier: string,
     @Body() dto: DepartmentCreateDto,
@@ -80,17 +68,13 @@ export class DepartmentController {
   }
 
   @Patch(':identifier/disable')
-  @SwaggerOperation(DepartmentSwagger.DISABLE)
-  @SwaggerParams(DepartmentSwagger.DISABLE.params)
-  @SwaggerResponses(DepartmentSwagger.DISABLE.responses)
+  @SwaggerApi(DepartmentSwagger.DISABLE)
   DISABLE(@Param('identifier') identifier: string) {
     return this.service.disable(this.toNameOrID(identifier));
   }
 
   @Patch(':identifier/enable')
-  @SwaggerOperation(DepartmentSwagger.ENABLE)
-  @SwaggerParams(DepartmentSwagger.ENABLE.params)
-  @SwaggerResponses(DepartmentSwagger.ENABLE.responses)
+  @SwaggerApi(DepartmentSwagger.ENABLE)
   ENABLE(@Param('identifier') identifier: string) {
     return this.service.enable(this.toNameOrID(identifier));
   }

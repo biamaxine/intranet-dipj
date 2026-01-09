@@ -3,21 +3,21 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { SwaggerRoute } from 'src/shared/decorators/swagger/operation.decorator';
+import { SwaggerRoute } from 'src/shared/decorators/swagger/api.decorator';
 import { SwaggerParamsInput } from 'src/shared/decorators/swagger/params.decorator';
 import { SwaggerQueriesInput } from 'src/shared/decorators/swagger/queries.decorator';
 import { SwaggerResponsesInput } from 'src/shared/decorators/swagger/response.decorator';
 
 import {
+  DEPARTMENT_CREATED_FAILURE,
+  DEPARTMENT_DISABLED_FAILURE,
+  DEPARTMENT_ENABLED_FAILURE,
+  DEPARTMENT_UPDATED_FAILURE,
   DepartmentConflictException,
   DepartmentNotFoundException,
   InactiveManagerException,
   ManagerNotFoundException,
   NoProvidedDepartmentDataException,
-  DEPARTMENT_CREATED_FAILURE,
-  DEPARTMENT_DISABLED_FAILURE,
-  DEPARTMENT_ENABLED_FAILURE,
-  DEPARTMENT_UPDATED_FAILURE,
 } from './classes/department.exceptions';
 import {
   DepartmentEntities,
